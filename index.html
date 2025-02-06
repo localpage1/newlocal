@@ -22,75 +22,206 @@
         .top, .bottom {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            padding: 0;
             width: 100%;
         }
 
         .image-container {
-            padding: 0; /* 去掉内边距 */
-            margin: 0; /* 去掉外边距 */
+            padding: 0;
+            margin: 0;
         }
 
         .image {
-            width: 100vw; /* 设置为100vw以消除左右留白 */
             display: block;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
             transition: transform 0.1s ease-out;
-            margin: 0; /* 去掉图片底部的间隔 */
+            margin: 0;
+        }
+
+        .slider-container {
+            position: fixed;
+            width: 90%;
+            max-width: 500px;
+            padding: 15px;
+        }
+
+        .slider {
+            width: 100%;
+        }
+
+        .slider-top {
+            bottom: 70px;
+        }
+
+        .slider-bottom {
+            bottom: 10px;
+        }
+
+        /* 悬浮窗样式 */
+        .scroll-indicator {
+            position: fixed;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        .scroll-top {
+            top: 10px;
+        }
+
+        .scroll-bottom {
+            bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="split">
-        <!-- 上半部分显示图片 -->
         <div class="top" id="top">
-            <div class="image-container" id="image-container-top">
-                <!-- 动态生成上半部分的图片 -->
-            </div>
+            <div class="image-container" id="image-container-top"></div>
         </div>
 
-        <!-- 下半部分显示图片 -->
         <div class="bottom" id="bottom">
-            <div class="image-container" id="image-container-bottom">
-                <!-- 动态生成下半部分的图片 -->
-            </div>
+            <div class="image-container" id="image-container-bottom"></div>
         </div>
     </div>
 
+    <div class="slider-container slider-top">
+        <input type="range" min="50" max="200" value="125" class="slider" id="slider-top">
+    </div>
+
+    <div class="slider-container slider-bottom">
+        <input type="range" min="50" max="200" value="125" class="slider" id="slider-bottom">
+    </div>
+
+    <!-- 滚动比值悬浮窗 -->
+    <div class="scroll-indicator scroll-top" id="scroll-top-indicator">滚动比例: 0.0000</div>
+    <div class="scroll-indicator scroll-bottom" id="scroll-bottom-indicator">滚动比例: 0.0000</div>
+
     <script>
-        // 恢复滚动位置
+        let lockedScrollRatioTop = null;
+        let lockedScrollRatioBottom = null;
+
+        function updateImageTransform(container, slider, isTop) {
+            const width = window.innerWidth;
+            const images = container.querySelectorAll('.image');
+            const scrollContainer = isTop ? document.getElementById('top') : document.getElementById('bottom');
+
+            // 使用锁定的滚动比值
+            let scrollRatio = isTop ? lockedScrollRatioTop : lockedScrollRatioBottom;
+
+            if (scrollRatio !== null) {
+                scrollRatio = parseFloat(scrollRatio).toFixed(4);
+            }
+
+            const imageWidth = (slider.value / 100) * width;
+            images.forEach(image => {
+                image.style.width = `${imageWidth}px`;
+            });
+
+            if (scrollRatio !== null) {
+                requestAnimationFrame(() => {
+                    scrollContainer.scrollTop = scrollRatio * (scrollContainer.scrollHeight - scrollContainer.clientHeight);
+                });
+            }
+        }
+
+        function updateScrollIndicators() {
+            const top = document.getElementById('top');
+            const bottom = document.getElementById('bottom');
+
+            const topRatio = (top.scrollTop / (top.scrollHeight - top.clientHeight)).toFixed(4);
+            const bottomRatio = (bottom.scrollTop / (bottom.scrollHeight - bottom.clientHeight)).toFixed(4);
+
+            document.getElementById('scroll-top-indicator').textContent = `滚动比例: ${topRatio}`;
+            document.getElementById('scroll-bottom-indicator').textContent = `滚动比例: ${bottomRatio}`;
+        }
+
+        function lockScrollRatio(isTop) {
+            const scrollContainer = isTop ? document.getElementById('top') : document.getElementById('bottom');
+            const ratio = (scrollContainer.scrollTop / (scrollContainer.scrollHeight - scrollContainer.clientHeight)).toFixed(4);
+            
+            if (isTop) {
+                lockedScrollRatioTop = ratio;
+            } else {
+                lockedScrollRatioBottom = ratio;
+            }
+        }
+
+        function unlockScrollRatio(isTop) {
+            if (isTop) {
+                lockedScrollRatioTop = null;
+            } else {
+                lockedScrollRatioBottom = null;
+            }
+        }
+
         window.onload = function() {
             document.getElementById('top').scrollTop = localStorage.getItem('topScroll') || 0;
             document.getElementById('bottom').scrollTop = localStorage.getItem('bottomScroll') || 0;
+
+            document.getElementById('slider-top').value = localStorage.getItem('sliderTopValue') || 125;
+            document.getElementById('slider-bottom').value = localStorage.getItem('sliderBottomValue') || 125;
+
+            updateImageTransform(document.getElementById('image-container-top'), document.getElementById('slider-top'), true);
+            updateImageTransform(document.getElementById('image-container-bottom'), document.getElementById('slider-bottom'), false);
+            updateScrollIndicators();
         };
 
-        // 保存滚动位置
         document.getElementById('top').onscroll = function() {
             localStorage.setItem('topScroll', this.scrollTop);
+            updateScrollIndicators();
         };
+
         document.getElementById('bottom').onscroll = function() {
             localStorage.setItem('bottomScroll', this.scrollTop);
+            updateScrollIndicators();
         };
 
-        // 动态生成上半部分图片列表
-        const imageContainerTop = document.getElementById('image-container-top');
-        for (let i = 1; i <= 289; i++) {
-            const img = document.createElement('img');
-            img.src = `k05-${i}.jpeg`;
-            img.alt = `Image ${i}`;
-            img.className = 'image';
-            imageContainerTop.appendChild(img);
+        document.getElementById('slider-top').addEventListener('touchstart', function() {
+            lockScrollRatio(true);
+        });
+
+        document.getElementById('slider-bottom').addEventListener('touchstart', function() {
+            lockScrollRatio(false);
+        });
+
+        document.getElementById('slider-top').addEventListener('input', function() {
+            localStorage.setItem('sliderTopValue', this.value);
+            updateImageTransform(document.getElementById('image-container-top'), this, true);
+        });
+
+        document.getElementById('slider-bottom').addEventListener('input', function() {
+            localStorage.setItem('sliderBottomValue', this.value);
+            updateImageTransform(document.getElementById('image-container-bottom'), this, false);
+        });
+
+        document.getElementById('slider-top').addEventListener('touchend', function() {
+            unlockScrollRatio(true);
+        });
+
+        document.getElementById('slider-bottom').addEventListener('touchend', function() {
+            unlockScrollRatio(false);
+        });
+
+        function createImages(container, prefix, count) {
+            for (let i = 1; i <= count; i++) {
+                const img = document.createElement('img');
+                img.src = `${prefix}-${i}.jpeg`;
+                img.alt = `Image ${i}`;
+                img.className = 'image';
+                container.appendChild(img);
+            }
         }
 
-        // 动态生成下半部分图片列表
-        const imageContainerBottom = document.getElementById('image-container-bottom');
-        for (let i = 1; i <= 264; i++) {
-            const img = document.createElement('img');
-            img.src = `Hidan no Aria vol.05-${i}.jpeg`;
-            img.alt = `Image ${i}`;
-            img.className = 'image';
-            imageContainerBottom.appendChild(img);
-        }
+        createImages(document.getElementById('image-container-top'), 'k05', 289);
+        createImages(document.getElementById('image-container-bottom'), 'Hidan no Aria vol.05', 264);
     </script>
 </body>
 </html>
