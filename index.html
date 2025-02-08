@@ -61,7 +61,7 @@
         }
 
         /* 悬浮窗样式 */
-      /  .scroll-indicator {
+        /.scroll-indicator {
             position: fixed;
             left: 10px;
             background: rgba(0, 0, 0, 0.6);
@@ -79,6 +79,7 @@
         .scroll-bottom {
             bottom: 10px;
         }
+
         .hidden {
             display: none;
         }
@@ -108,9 +109,6 @@
     <div class="scroll-indicator scroll-bottom" id="scroll-bottom-indicator">滚动比例: 0.0000</div>
 
     <script>
-
-
-
         let lockedScrollRatioTop = null;
         let lockedScrollRatioBottom = null;
 
@@ -178,6 +176,14 @@
             updateImageTransform(document.getElementById('image-container-top'), document.getElementById('slider-top'), true);
             updateImageTransform(document.getElementById('image-container-bottom'), document.getElementById('slider-bottom'), false);
             updateScrollIndicators();
+
+            // 恢复滑块的显示/隐藏状态
+            const slidersHidden = localStorage.getItem('slidersHidden') === 'true';
+            if (slidersHidden) {
+                document.querySelectorAll('.slider-container').forEach(slider => {
+                    slider.classList.add('hidden');
+                });
+            }
         };
 
         document.getElementById('top').onscroll = function() {
@@ -228,6 +234,7 @@
 
         createImages(document.getElementById('image-container-top'), 'k05', 289);
         createImages(document.getElementById('image-container-bottom'), 'Hidan no Aria vol.05', 264);
+
         // 触摸事件：五指触摸 5 秒立即隐藏或展开滑块
         let touchStartTime = null;
         let touchCount = 0;
@@ -257,35 +264,35 @@
             sliders.forEach(slider => {
                 slider.classList.toggle('hidden');
             });
+
+            // 存储滑块的隐藏状态
+            const slidersHidden = document.querySelector('.slider-container').classList.contains('hidden');
+            localStorage.setItem('slidersHidden', slidersHidden);
         }
 
         document.body.addEventListener('touchstart', handleTouchStart);
         document.body.addEventListener('touchend', handleTouchEnd);
         document.body.addEventListener('touchmove', handleTouchStart); // 触摸移动时保持计时
 
-//
-    // 禁用滑块轨道点击事件，强制用户拖// 禁用点击滑块轨道
-document.getElementById('slider-top').addEventListener('click', function(event) {
-    event.preventDefault();
-});
+        // 禁用滑块轨道点击事件，强制用户拖动滑块
+        document.getElementById('slider-top').addEventListener('click', function(event) {
+            event.preventDefault();
+        });
 
-document.getElementById('slider-bottom').addEventListener('click', function(event) {
-    event.preventDefault();
-});
+        document.getElementById('slider-bottom').addEventListener('click', function(event) {
+            event.preventDefault();
+        });
 
-// 禁用轨道点击事件，强制用户拖动滑块
-document.getElementById('slider-top').addEventListener('mousedown', function(event) {
-    // 仅允许拖动滑块，不允许点击轨道
-    event.preventDefault();
-});
+        // 禁用轨道点击事件，强制用户拖动滑块
+        document.getElementById('slider-top').addEventListener('mousedown', function(event) {
+            // 仅允许拖动滑块，不允许点击轨道
+            event.preventDefault();
+        });
 
-document.getElementById('slider-bottom').addEventListener('mousedown', function(event) {
-    // 仅允许拖动滑块，不允许点击轨道
-    event.preventDefault();
-});
-
-</script>
-
+        document.getElementById('slider-bottom').addEventListener('mousedown', function(event) {
+            // 仅允许拖动滑块，不允许点击轨道
+            event.preventDefault();
+        });
     </script>
 </body>
 </html>
