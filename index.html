@@ -61,7 +61,7 @@
         }
 
         /* 悬浮窗样式 */
-        .scroll-indicator {
+      /  .scroll-indicator {
             position: fixed;
             left: 10px;
             background: rgba(0, 0, 0, 0.6);
@@ -108,6 +108,9 @@
     <div class="scroll-indicator scroll-bottom" id="scroll-bottom-indicator">滚动比例: 0.0000</div>
 
     <script>
+
+
+
         let lockedScrollRatioTop = null;
         let lockedScrollRatioBottom = null;
 
@@ -259,6 +262,30 @@
         document.body.addEventListener('touchstart', handleTouchStart);
         document.body.addEventListener('touchend', handleTouchEnd);
         document.body.addEventListener('touchmove', handleTouchStart); // 触摸移动时保持计时
+
+//
+    // 禁用滑块轨道点击事件，强制用户拖// 禁用点击滑块轨道
+document.getElementById('slider-top').addEventListener('click', function(event) {
+    event.preventDefault();
+});
+
+document.getElementById('slider-bottom').addEventListener('click', function(event) {
+    event.preventDefault();
+});
+
+// 禁用轨道点击事件，强制用户拖动滑块
+document.getElementById('slider-top').addEventListener('mousedown', function(event) {
+    // 仅允许拖动滑块，不允许点击轨道
+    event.preventDefault();
+});
+
+document.getElementById('slider-bottom').addEventListener('mousedown', function(event) {
+    // 仅允许拖动滑块，不允许点击轨道
+    event.preventDefault();
+});
+
+</script>
+
     </script>
 </body>
 </html>
